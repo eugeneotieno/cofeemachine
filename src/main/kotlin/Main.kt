@@ -12,8 +12,111 @@ const val ONE_CUP_WATER = 200
 const val ONE_CUP_MILK = 50
 const val ONE_CUP_BEANS = 15
 
-fun main() {
+const val ONE_CUP_ESPRESSO_WATER = 250
+const val ONE_CUP_ESPRESSO_BEANS = 16
+const val ONE_CUP_ESPRESSO_PRICE = 4
 
+const val ONE_CUP_LATTE_WATER = 350
+const val ONE_CUP_LATTE_MILK = 75
+const val ONE_CUP_LATTE_BEANS = 20
+const val ONE_CUP_LATTE_PRICE = 7
+
+const val ONE_CUP_CAPPUCCINO_WATER = 200
+const val ONE_CUP_CAPPUCCINO_MILK = 100
+const val ONE_CUP_CAPPUCCINO_BEANS = 12
+const val ONE_CUP_CAPPUCCINO_PRICE = 6
+
+var availableWater = 400
+var availableMilk = 540
+var availableBeans = 120
+var disposableCups = 9
+var amountLeft = 550
+
+fun main() {
+    showMachineState()
+    actions()
+}
+
+fun showMachineState(){
+    println("The coffee machine has:")
+    println("$availableWater ml of water")
+    println("$availableMilk ml of milk")
+    println("$availableBeans g of coffee beans")
+    println("$disposableCups disposable cups")
+    println("$$amountLeft of money")
+}
+
+fun actions() {
+    println()
+    println("Write action (buy, fill, take): ")
+    when(readln()) {
+        "buy" -> buy()
+        "fill" -> fill()
+        "take" -> take()
+    }
+}
+
+fun buy(){
+    println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino: ")
+    when(readln().toInt()) {
+        1 -> {
+            availableWater -= ONE_CUP_ESPRESSO_WATER
+            availableBeans -= ONE_CUP_ESPRESSO_BEANS
+            amountLeft += ONE_CUP_ESPRESSO_PRICE
+            disposableCups -= 1
+
+            println()
+            showMachineState()
+        }
+        2 -> {
+            availableWater -= ONE_CUP_LATTE_WATER
+            availableBeans -= ONE_CUP_LATTE_BEANS
+            availableMilk -= ONE_CUP_LATTE_MILK
+            amountLeft += ONE_CUP_LATTE_PRICE
+            disposableCups -= 1
+
+            println()
+            showMachineState()
+        }
+        3 -> {
+            availableWater -= ONE_CUP_CAPPUCCINO_WATER
+            availableBeans -= ONE_CUP_CAPPUCCINO_BEANS
+            availableMilk -= ONE_CUP_CAPPUCCINO_MILK
+            amountLeft += ONE_CUP_CAPPUCCINO_PRICE
+            disposableCups -= 1
+
+            println()
+            showMachineState()
+        }
+    }
+}
+
+fun fill() {
+    println("Write how many ml of water the coffee machine has: ")
+    availableWater += readln().toInt()
+
+    println("Write how many ml of milk the coffee machine has: ")
+    availableMilk += readln().toInt()
+
+    println("Write how many grams of coffee beans the coffee machine has: ")
+    availableBeans += readln().toInt()
+
+    println("Write how many cups of coffee you will need: ")
+    disposableCups += readln().toInt()
+
+    println()
+    showMachineState()
+}
+
+fun take() {
+    println("I gave you $$amountLeft")
+    amountLeft = 0
+
+    println()
+    showMachineState()
+}
+
+fun laterReferences(){
     println("Write how many ml of water the coffee machine has: ")
     val availableWater = readln().toInt()
 
