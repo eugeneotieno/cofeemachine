@@ -1,239 +1,217 @@
-const val STEPS = """
-Starting to make a coffee
-Grinding coffee beans
-Boiling water
-Mixing boiled water with crushed coffee beans
-Pouring coffee into the cup
-Pouring some milk into the cup
-Coffee is ready!
-"""
+enum class Espresso(val quantity: Int) {
+    WATER(250),
+    BEANS(16),
+    PRICE(4),
+}
 
-const val ONE_CUP_WATER = 200
-const val ONE_CUP_MILK = 50
-const val ONE_CUP_BEANS = 15
+enum class Latte(val quantity: Int) {
+    WATER(350),
+    MILK(75),
+    BEANS(20),
+    PRICE(7),
+}
 
-const val ONE_CUP_ESPRESSO_WATER = 250
-const val ONE_CUP_ESPRESSO_BEANS = 16
-const val ONE_CUP_ESPRESSO_PRICE = 4
+enum class Cappuccino(val quantity: Int) {
+    WATER(200),
+    MILK(100),
+    BEANS(12),
+    PRICE(6),
+}
 
-const val ONE_CUP_LATTE_WATER = 350
-const val ONE_CUP_LATTE_MILK = 75
-const val ONE_CUP_LATTE_BEANS = 20
-const val ONE_CUP_LATTE_PRICE = 7
-
-const val ONE_CUP_CAPPUCCINO_WATER = 200
-const val ONE_CUP_CAPPUCCINO_MILK = 100
-const val ONE_CUP_CAPPUCCINO_BEANS = 12
-const val ONE_CUP_CAPPUCCINO_PRICE = 6
-
-var availableWater = 400
-var availableMilk = 540
-var availableBeans = 120
-var disposableCups = 9
-var amountLeft = 550
+enum class InitialState(val quantity: Int) {
+    WATER(400),
+    MILK(540),
+    BEANS(120),
+    CUPS(9),
+    AMOUNT(550)
+}
 
 fun main() {
-    actions()
-}
+    val coffeeMachine = CoffeeMachine(
+        initialAvailableWater = InitialState.WATER.quantity,
+        initialAvailableMilk = InitialState.MILK.quantity,
+        initialAvailableBeans = InitialState.BEANS.quantity,
+        initialDisposableCups = InitialState.CUPS.quantity,
+        initialAmountLeft = InitialState.AMOUNT.quantity
+    )
 
-fun showMachineState(){
-    println()
-    println("The coffee machine has:")
-    println("$availableWater ml of water")
-    println("$availableMilk ml of milk")
-    println("$availableBeans g of coffee beans")
-    println("$disposableCups disposable cups")
-    println("$$amountLeft of money")
-    println()
-}
-
-fun actions() {
     var exit = false
     do {
         println("Write action (buy, fill, take, remaining, exit): ")
         when(readln()) {
-            "buy" -> buy()
-            "fill" -> fill()
-            "take" -> take()
-            "remaining" -> showMachineState()
+            "buy" -> {
+                println()
+                println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu: ")
+                val action = readln()
+                coffeeMachine.buy(action)
+            }
+            "fill" ->  {
+                println()
+
+                println("Write how many ml of water you want to add: ")
+                coffeeMachine.availableWater += readln().toInt()
+
+                println("Write how many ml of milk you want to add: ")
+                coffeeMachine.availableMilk += readln().toInt()
+
+                println("Write how many grams of coffee beans you want to add: ")
+                coffeeMachine.availableBeans += readln().toInt()
+
+                println("Write how many disposable cups you want to add: ")
+                coffeeMachine.disposableCups += readln().toInt()
+
+                println()
+            }
+            "take" -> coffeeMachine.take()
+            "remaining" -> coffeeMachine.showState()
             "exit" -> exit = true
         }
     } while (!exit)
-
 }
 
-fun buy(){
-    println()
-    println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu: ")
-    when(readln()) {
-        "1" -> {
-            val waterCups = howManyCupsIngredientsCanMake(availableWater, ONE_CUP_ESPRESSO_WATER)
-            val beanCups = howManyCupsIngredientsCanMake(availableBeans, ONE_CUP_ESPRESSO_BEANS)
+class CoffeeMachine(
+    val initialAvailableWater: Int,
+    val initialAvailableMilk: Int,
+    val initialAvailableBeans: Int,
+    val initialDisposableCups: Int,
+    val initialAmountLeft: Int
+) {
+    var availableWater: Int = initialAvailableWater
+    var availableMilk: Int = initialAvailableMilk
+    var availableBeans: Int = initialAvailableBeans
+    var disposableCups: Int = initialDisposableCups
+    private var amountLeft: Int = initialAmountLeft
 
-            val numOfCups = mutableListOf(waterCups, beanCups)
-            var numOfCupsPossible = numOfCups.minOrNull()
-            if (numOfCupsPossible == null) numOfCupsPossible = 0
+    fun showState() {
+        println()
+        println("The coffee machine has:")
+        println("$availableWater ml of water")
+        println("$availableMilk ml of milk")
+        println("$availableBeans g of coffee beans")
+        println("$disposableCups disposable cups")
+        println("$$amountLeft of money")
+        println()
+    }
 
-            if (numOfCupsPossible > 0) {
-                println("I have enough resources, making you a coffee!")
+    fun buy(action: String) {
+        when(action) {
+            "1" -> {
+                val waterCups = howManyCupsIngredientsCanMake(availableWater, Espresso.WATER.quantity)
+                val beanCups = howManyCupsIngredientsCanMake(availableBeans, Espresso.BEANS.quantity)
 
-                availableWater -= ONE_CUP_ESPRESSO_WATER
-                availableBeans -= ONE_CUP_ESPRESSO_BEANS
-                amountLeft += ONE_CUP_ESPRESSO_PRICE
-                disposableCups -= 1
+                val numOfCups = mutableListOf(waterCups, beanCups)
+                var numOfCupsPossible = numOfCups.minOrNull()
+                if (numOfCupsPossible == null) numOfCupsPossible = 0
 
-                println()
-            } else {
-                when (numOfCups.indexOf(numOfCupsPossible)) {
-                    0 -> {
-                        println("Sorry, not enough water!")
+                if (numOfCupsPossible > 0) {
+                    println("I have enough resources, making you a coffee!")
+
+                    availableWater -= Espresso.WATER.quantity
+                    availableBeans -= Espresso.BEANS.quantity
+                    amountLeft += Espresso.PRICE.quantity
+                    disposableCups -= 1
+
+                    println()
+                } else {
+                    when (numOfCups.indexOf(numOfCupsPossible)) {
+                        0 -> {
+                            println("Sorry, not enough water!")
+                        }
+                        1 -> {
+                            println("Sorry, not enough coffee beans!")
+                        }
+                        else -> {
+                            println("Sorry, not enough milk!")
+                        }
                     }
-                    1 -> {
-                        println("Sorry, not enough coffee beans!")
-                    }
-                    else -> {
-                        println("Sorry, not enough milk!")
-                    }
+
+                    println()
                 }
+            }
+            "2" -> {
+                val waterCups = howManyCupsIngredientsCanMake(availableWater, Latte.WATER.quantity)
+                val beanCups = howManyCupsIngredientsCanMake(availableBeans, Latte.BEANS.quantity)
+                val milkCups = howManyCupsIngredientsCanMake(availableMilk, Latte.MILK.quantity)
 
+                val numOfCups = mutableListOf(waterCups, beanCups, milkCups)
+                var numOfCupsPossible = numOfCups.minOrNull()
+                if (numOfCupsPossible == null) numOfCupsPossible = 0
+
+                if (numOfCupsPossible > 0) {
+                    println("I have enough resources, making you a coffee!")
+
+                    availableWater -= Latte.WATER.quantity
+                    availableBeans -= Latte.BEANS.quantity
+                    availableMilk -= Latte.MILK.quantity
+                    amountLeft += Latte.PRICE.quantity
+                    disposableCups -= 1
+
+                    println()
+                } else {
+                    when (numOfCups.indexOf(numOfCupsPossible)) {
+                        0 -> {
+                            println("Sorry, not enough water!")
+                        }
+                        1 -> {
+                            println("Sorry, not enough coffee beans!")
+                        }
+                        else -> {
+                            println("Sorry, not enough milk!")
+                        }
+                    }
+
+                    println()
+                }
+            }
+            "3" -> {
+                val waterCups = howManyCupsIngredientsCanMake(availableWater, Cappuccino.WATER.quantity)
+                val beanCups = howManyCupsIngredientsCanMake(availableBeans, Cappuccino.BEANS.quantity)
+                val milkCups = howManyCupsIngredientsCanMake(availableMilk, Cappuccino.MILK.quantity)
+
+                val numOfCups = mutableListOf(waterCups, beanCups, milkCups)
+                var numOfCupsPossible = numOfCups.minOrNull()
+                if (numOfCupsPossible == null) numOfCupsPossible = 0
+
+                if (numOfCupsPossible > 0) {
+                    println("I have enough resources, making you a coffee!")
+
+                    availableWater -= Cappuccino.WATER.quantity
+                    availableBeans -= Cappuccino.BEANS.quantity
+                    availableMilk -= Cappuccino.MILK.quantity
+                    amountLeft += Cappuccino.PRICE.quantity
+                    disposableCups -= 1
+
+                    println()
+                } else {
+                    when (numOfCups.indexOf(numOfCupsPossible)) {
+                        0 -> {
+                            println("Sorry, not enough water!")
+                        }
+                        1 -> {
+                            println("Sorry, not enough coffee beans!")
+                        }
+                        else -> {
+                            println("Sorry, not enough milk!")
+                        }
+                    }
+
+                    println()
+                }
+            }
+            "back" -> {
                 println()
             }
-        }
-        "2" -> {
-            val waterCups = howManyCupsIngredientsCanMake(availableWater, ONE_CUP_LATTE_WATER)
-            val beanCups = howManyCupsIngredientsCanMake(availableBeans, ONE_CUP_LATTE_BEANS)
-            val milkCups = howManyCupsIngredientsCanMake(availableMilk, ONE_CUP_LATTE_MILK)
-
-            val numOfCups = mutableListOf(waterCups, beanCups, milkCups)
-            var numOfCupsPossible = numOfCups.minOrNull()
-            if (numOfCupsPossible == null) numOfCupsPossible = 0
-
-            if (numOfCupsPossible > 0) {
-                println("I have enough resources, making you a coffee!")
-
-                availableWater -= ONE_CUP_LATTE_WATER
-                availableBeans -= ONE_CUP_LATTE_BEANS
-                availableMilk -= ONE_CUP_LATTE_MILK
-                amountLeft += ONE_CUP_LATTE_PRICE
-                disposableCups -= 1
-
-                println()
-            } else {
-                when (numOfCups.indexOf(numOfCupsPossible)) {
-                    0 -> {
-                        println("Sorry, not enough water!")
-                    }
-                    1 -> {
-                        println("Sorry, not enough coffee beans!")
-                    }
-                    else -> {
-                        println("Sorry, not enough milk!")
-                    }
-                }
-
-                println()
-            }
-        }
-        "3" -> {
-            val waterCups = howManyCupsIngredientsCanMake(availableWater, ONE_CUP_CAPPUCCINO_WATER)
-            val beanCups = howManyCupsIngredientsCanMake(availableBeans, ONE_CUP_CAPPUCCINO_BEANS)
-            val milkCups = howManyCupsIngredientsCanMake(availableMilk, ONE_CUP_CAPPUCCINO_MILK)
-
-            val numOfCups = mutableListOf(waterCups, beanCups, milkCups)
-            var numOfCupsPossible = numOfCups.minOrNull()
-            if (numOfCupsPossible == null) numOfCupsPossible = 0
-
-            if (numOfCupsPossible > 0) {
-                println("I have enough resources, making you a coffee!")
-
-                availableWater -= ONE_CUP_CAPPUCCINO_WATER
-                availableBeans -= ONE_CUP_CAPPUCCINO_BEANS
-                availableMilk -= ONE_CUP_CAPPUCCINO_MILK
-                amountLeft += ONE_CUP_CAPPUCCINO_PRICE
-                disposableCups -= 1
-
-                println()
-            } else {
-                when (numOfCups.indexOf(numOfCupsPossible)) {
-                    0 -> {
-                        println("Sorry, not enough water!")
-                    }
-                    1 -> {
-                        println("Sorry, not enough coffee beans!")
-                    }
-                    else -> {
-                        println("Sorry, not enough milk!")
-                    }
-                }
-
-                println()
-            }
-        }
-        "back" -> {
-            println()
         }
     }
-}
 
-fun howManyCupsIngredientsCanMake(numerator: Int, denominator: Int): Int {
-    return numerator / denominator
-}
-
-fun fill() {
-    println()
-    println("Write how many ml of water the coffee machine has: ")
-    availableWater += readln().toInt()
-
-    println("Write how many ml of milk the coffee machine has: ")
-    availableMilk += readln().toInt()
-
-    println("Write how many grams of coffee beans the coffee machine has: ")
-    availableBeans += readln().toInt()
-
-    println("Write how many cups of coffee you will need: ")
-    disposableCups += readln().toInt()
-}
-
-fun take() {
-    println()
-    println("I gave you $$amountLeft")
-    amountLeft = 0
-}
-
-fun laterReferences(){
-    println("Write how many ml of water the coffee machine has: ")
-    val availableWater = readln().toInt()
-
-    println("Write how many ml of milk the coffee machine has: ")
-    val availableMilk = readln().toInt()
-
-    println("Write how many grams of coffee beans the coffee machine has: ")
-    val availableBeans = readln().toInt()
-
-    println("Write how many cups of coffee you will need: ")
-    val cups = readln().toInt()
-    requirements(cups)
-
-    val waterCups = howManyCupsIngredientsCanMake(availableWater, ONE_CUP_WATER)
-    val milkCups = howManyCupsIngredientsCanMake(availableMilk, ONE_CUP_MILK)
-    val beanCups = howManyCupsIngredientsCanMake(availableBeans, ONE_CUP_BEANS)
-
-    val numOfCups = mutableListOf(waterCups, milkCups, beanCups)
-    var numOfCupsPossible = numOfCups.minOrNull()
-    if (numOfCupsPossible == null) numOfCupsPossible = 0
-
-    if (numOfCupsPossible == cups) {
-        println("Yes, I can make that amount of coffee")
-    } else if (numOfCupsPossible > cups) {
-        val rem = numOfCupsPossible - cups
-        println("Yes, I can make that amount of coffee (and even $rem more than that)")
-    } else {
-        println("No, I can make only $numOfCupsPossible cups of coffee")
+    private fun howManyCupsIngredientsCanMake(numerator: Int, denominator: Int): Int {
+        return numerator / denominator
     }
-}
 
-fun requirements(cups: Int) {
-    val water = cups * ONE_CUP_WATER
-    val milk = cups * ONE_CUP_MILK
-    val beans = cups * ONE_CUP_BEANS
+    fun take() {
+        println()
+        println("I gave you $$amountLeft")
+        amountLeft = 0
+        println()
+    }
 }
